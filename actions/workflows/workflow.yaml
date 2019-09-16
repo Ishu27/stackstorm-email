@@ -1,0 +1,52 @@
+---
+version: '1.0'
+description: A workflow to process an github deployment event and install a pack if the environment matches.
+input:
+  - Subcription_id
+  - Group_Name
+  - Location
+  - VM_Name
+  - Client_Id
+  - Secret
+  - Tenant_Id
+  - from
+tasks:
+  create_vm:
+    action: email123.create_vm
+    input:      
+      Subcription_id: <% ctx().Subcription_id %>
+      Location: <% ctx().Location %>
+      VM_Name: <% ctx().VM_Name %>
+      Client_Id: <% ctx().Client_Id %>
+      Secret: <% ctx().Secret %>
+      Tenant_Id: <% ctx().Tenant_Id %>      
+    next:
+      - when: <% succeeded() %>
+        do:
+          - send_mail
+      - when: <% failed() %>
+        do:
+          - work_failed
+  send_mail:
+    action: email123.send_mail
+   input:      
+      email_to : <% ctx().from %>     
+    next:
+      - when: <% succeeded() %>
+        do:
+          - work_success
+      - when: <% failed() %>
+        do:
+          - work_failed
+  work_success:
+    action: core.local
+    input:
+      cmd: echo compleated
+      state: success
+      description: Completed workflow
+  work_failed:
+    action: core.local
+    input:
+      cmd: echo failed 
+      state: failure
+      description: Failed workflow
